@@ -36,7 +36,6 @@ class ForagerAgent(Agent):
         )
         new_position = self.random.choice(possible_steps)
         self.model.grid.move_agent(self, new_position)
-        self.pos = new_position
         
 class InitialModel(Model):
     """The most basic model"""

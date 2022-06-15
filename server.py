@@ -15,6 +15,6 @@ grid = CanvasGrid(agent_portrayal, 10, 10, 500, 500)
 server = ModularServer(InitialModel,
                        [grid],
                        "First Model Visualization",
-                       {"N":1, "width":10, "height":10})
+                       {"N":2, "width":10, "height":10})
 
 server.port = 8521 #default
