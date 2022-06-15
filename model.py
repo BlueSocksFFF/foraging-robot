@@ -20,10 +20,9 @@ class FoodAgent(Agent):
 class ForagerAgent(Agent):
     """Agent that forages food"""
     
-    def __init__(self, unique_id, model, pos):
+    def __init__(self, unique_id, model):
         '''Could add more attributes'''
         super().__init__(unique_id, model)
-        self.pos = pos
         
     def step(self):
         '''Location change'''
@@ -35,7 +34,6 @@ class ForagerAgent(Agent):
             moore = False,
             include_center = False
         )
-        print(self.pos, possible_steps)
         new_position = self.random.choice(possible_steps)
         self.model.grid.move_agent(self, new_position)
         self.pos = new_position
@@ -47,18 +45,18 @@ class InitialModel(Model):
         super().__init__()
         self.num_agents = N
         self.schedule = SimultaneousActivation(self)
-        self.grid = MultiGrid(width, height, True)
+        self.grid = MultiGrid(width, height, False)
+        # Cannot be torus because it cannot move cross boarder
         
         # Create agents
         for i in range(self.num_agents):
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
-            pos = (x, y)
-            a = ForagerAgent(i, self, pos)
+
+            a = ForagerAgent(i, self)
             self.schedule.add(a)
             
             # Add agents to the grid
-            
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
             self.grid.place_agent(a, (x, y))
         
     def step(self):
