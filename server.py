@@ -17,5 +17,4 @@ server = ModularServer(InitialModel,
                        "First Model Visualization",
                        {"N":1, "width":10, "height":10})
 
-#server.port = 8521 #default
-server.launch()
+server.port = 8521 #default

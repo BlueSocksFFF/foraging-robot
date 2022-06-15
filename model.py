@@ -20,9 +20,10 @@ class FoodAgent(Agent):
 class ForagerAgent(Agent):
     """Agent that forages food"""
     
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, pos):
         '''Could add more attributes'''
         super().__init__(unique_id, model)
+        self.pos = pos
         
     def step(self):
         '''Location change'''
@@ -32,11 +33,12 @@ class ForagerAgent(Agent):
         possible_steps = self.model.grid.get_neighborhood(
             self.pos,
             moore = False,
-            include_cener = False
+            include_center = False
         )
-        print(possible_steps)
+        print(self.pos, possible_steps)
         new_position = self.random.choice(possible_steps)
         self.model.grid.move_agent(self, new_position)
+        self.pos = new_position
         
 class InitialModel(Model):
     """The most basic model"""
@@ -49,12 +51,14 @@ class InitialModel(Model):
         
         # Create agents
         for i in range(self.num_agents):
-            a = ForagerAgent(i, self)
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            pos = (x, y)
+            a = ForagerAgent(i, self, pos)
             self.schedule.add(a)
             
             # Add agents to the grid
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
+            
             self.grid.place_agent(a, (x, y))
         
     def step(self):
