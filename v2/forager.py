@@ -1,4 +1,5 @@
 import mesa
+from food import Food
 
 class Forager(mesa.Agent):
     """Forager: created randomly and moves randomly to neighboring cells.
@@ -26,8 +27,11 @@ class Forager(mesa.Agent):
     
     def move(self):
         if self.food_id == None:
+            #Test
+            print("Move Randomly")
             self.move_randomly()
         else:
+            print("Move Home")
             self.move_home()
             
     def move_randomly(self):
@@ -37,15 +41,15 @@ class Forager(mesa.Agent):
             
     def move_home(self):
         # TODO: revise to make it more elegant
-        home_x, home_y = self.model.grid.home
+        home_x_min, home_x_max, home_y_min, home_y_max = self.model.grid.home
         pos_x, pos_y = self.pos
-        if home_x < pos_x:
+        if home_x_max < pos_x:
             self.model.grid.move_agent(self, (pos_x-1, pos_y))
-        elif home_x > pos_x:
+        elif home_x_min > pos_x:
             self.model.grid.move_agent(self, (pos_x+1, pos_y))
-        elif home_y < pos_y:
+        elif home_y_max < pos_y:
             self.model.grid.move_agent(self, (pos_x, pos_y-1))
-        elif home_y > pos_y:
+        elif home_y_min > pos_y:
             self.model.grid.move_agent(self, (pos_x, pos_y+1))
         else:
             self.at_home = True
@@ -54,11 +58,14 @@ class Forager(mesa.Agent):
         self.move()
         
     def advance(self):
-        cell_content = self.model.grid.get_cell_list_content()
-        food = [obj for obj in cell_content if isinstance(obj, Food)]
-        if food != None:
-            self.food_id = food.get_id()
-            self.model.grid.remove_agent(food, self.pos)
+        cell_content = self.model.grid.get_cell_list_contents([self.pos])
+        for obj in cell_content:
+            if isinstance(obj, Food):
+                self.food_id = obj.get_id()
+                self.model.grid.remove_agent(obj)
+        # Test
+        print("forager", self.unique_id, self.pos, self.food_id)
+        
 
 
         
