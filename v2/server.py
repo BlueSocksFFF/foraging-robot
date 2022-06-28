@@ -4,6 +4,7 @@ from mesa.visualization.modules import CanvasGrid
 
 from forager import Forager
 from food import Food
+from obstacle import Obstacle
 from model import RandomForagingModel
 
 def agent_portrayal(agent):
@@ -18,7 +19,7 @@ def agent_portrayal(agent):
         portrayal["r"] = 0.5
         portrayal["Color"] = "Aquamarine"
         portrayal["Filled"] = True
-        portrayal["Layer"] = 0
+        portrayal["Layer"] = 2
 
     elif type(agent) is Food:
         portrayal["Shape"] = "rect"
@@ -28,10 +29,18 @@ def agent_portrayal(agent):
         portrayal["Filled"] = True
         portrayal["Layer"] = 1
         
+    elif type(agent) is Obstacle:
+        portrayal["Shape"] = "rect"
+        portrayal['w'] = 1
+        portrayal['h'] = 1
+        portrayal["Color"] = "Olive"
+        portrayal["Filled"] = True
+        portrayal["Layer"] = 0
+        
         
     return portrayal
 
-canvas_element = CanvasGrid(agent_portrayal, 20, 20, 500, 500)
+canvas_element = CanvasGrid(agent_portrayal, 10, 10, 500, 500)
 
 #TODO: add model params
 
@@ -39,6 +48,6 @@ server = ModularServer(
     RandomForagingModel,
     [canvas_element],
     "Forager Simulation",
-    {"width":20, "height":20}
+    {"width":10, "height":10}
 )
 server.port = 8521

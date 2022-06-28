@@ -1,7 +1,8 @@
 import mesa
 
-class Food(mesa.Agent):
-    """ Food agent that does not move
+class Obstacle(mesa.Agent):
+    """ Obstacles do not move.
+        And do not allow other agents.
     """
     
     def __init__(self, unique_id, model):
@@ -14,6 +15,4 @@ class Food(mesa.Agent):
         return
     
     def advance(self):
-        #Test
-        super()
         return
