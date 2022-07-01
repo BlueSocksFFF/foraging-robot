@@ -21,7 +21,11 @@ class GridWithObstacles(MultiGridWithHome):
         super().__init__(width, height, torus, home)
         self.obstacles = dict()
         self.num_obstacles = 0
-        self.add_obstacle(5, 7, 5, 7)
+        # Environment 1
+        self.add_obstacle(0, 0, 4, 6)
+        self.add_obstacle(4, 5, 3, 4)
+        self.add_obstacle(9, 9, 4, 6)
+        self.add_obstacle(4, 5, 9, 9)
         
     def add_obstacle(self, min_x, max_x, min_y, max_y):
         self.obstacles[self.num_obstacles] = (min_x, max_x, min_y, max_y)

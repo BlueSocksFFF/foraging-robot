@@ -14,10 +14,10 @@ class RandomForagingModel(mesa.Model):
     height_preset = 10
     width_preset = 10
     
-    number_food_preset = 5
+    number_food_preset = 40
     number_foragers_preset = 3
     
-    home_preset = (0, 0, 0, 0)
+    home_preset = [(0, 0), (1, 0)]
     
     with_obstacles_preset = True
     
@@ -41,29 +41,28 @@ class RandomForagingModel(mesa.Model):
         self.with_obstacles = with_obstacles
         self.init_grid()
         self.place_foragers()
-        self.place_food()
         self.place_obstacles()
+        self.place_food()
+        
         
     def init_grid(self):
         if self.with_obstacles:
             self.grid = GridWithObstacles(self.width, self.height, torus=False, home=self.home)
         else:
             self.grid = MultiGridWithHome(self.width, self.height, torus=False, home=self.home)
-        self.home_x_min, self.home_x_max, self.home_y_min, self.home_y_max = self.grid.home
                     
     def place_foragers(self):
         for i in range(self.number_foragers):
             forager = Forager(self.next_id(), self)
             self.schedule.add(forager)
-            x = self.random.randrange(self.home_x_min, self.home_x_max+1)
-            y = self.random.randrange(self.home_y_min, self.home_y_max+1)
-            self.grid.place_agent(forager, (x, y))
+            pos = self.random.choice(self.home)
+            self.grid.place_agent(forager, pos)
         
     def place_food(self):
         for i in range(self.number_food):
             x = self.random.randrange(self.width)
             y = self.random.randrange(self.height)
-            while x>=self.home_x_min and x<=self.home_x_max and y>=self.home_y_min and y<=self.home_y_max:
+            while (x,y) in self.home or self.check_content((x, y), Obstacle) != None:
                 x = self.random.randrange(self.width)
                 y = self.random.randrange(self.height)
             food = Food(self.next_id(), self)
@@ -80,8 +79,22 @@ class RandomForagingModel(mesa.Model):
                     for y in range(y_min, y_max+1):
                         obstacle = Obstacle(self.next_id(), self)
                         self.grid.place_agent(obstacle, (x, y))
+                        
+    def check_content(self, pos, type):
+        cell_content = self.grid.get_cell_list_contents([pos])
+        for obj in cell_content:
+            if isinstance(obj, type):
+                return obj
+        return None
             
     def step(self):
         if self.number_food == 0:
             print("Found all food.")
         self.schedule.step()
+        
+if __name__ == "__main__":
+    # Test A*
+    model = RandomForagingModel(home=[(0,0), (1,0)])
+    forager = Forager(0, model)
+    model.grid.place_agent(forager, (0, 7))
+    print(forager.test_astar(forager.pos, model.grid.home))
