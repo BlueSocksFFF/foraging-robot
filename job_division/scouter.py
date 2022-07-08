@@ -1,7 +1,116 @@
 import mesa
-from random_foraging import Forager
+import sys
 
-class Scouter(Forager):
+sys.path.insert(1, '../random_foraging')
+from astar import Astar
+from obstacle import Obstacle
+from food import Food
 
-    def __init__(self, unique_id, model):
+
+# TODO Should the parent class be Forager?
+
+
+class Scouter(mesa.Agent):
+
+    def __init__(self, unique_id, model: mesa.Model) -> None:
         super().__init__(unique_id, model)
+        self.found_food: bool = False
+        self.food_location: tuple[int, int] = (-1, -1)
+        self.at_home: bool = True
+        self.a_star = Astar(self.model)
+        self.path_home: list[tuple[int, int]] = []
+        self.path_food = []
+        self.cost_path: int = 0
+        self.wait: bool = False
+
+    def check_home(self) -> bool:
+        if self.pos in self.model.grid.home:
+            print('at home')
+            self.at_home = True
+        else:
+            self.at_home = False
+
+    def check_content(self, pos, its_type):
+        cell_content = self.model.grid.get_cell_list_contents(pos)
+        for obj in cell_content:
+            if isinstance(obj, its_type):
+                return obj
+        return None
+
+    def check_food(self):
+        if not self.found_food:
+            neighbors = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=True)
+            food = self.check_content(neighbors, Food)
+            if food is not None:
+                print('found food')
+                self.found_food = True
+                self.food_location = food.pos
+                self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+                if self.path_home is None:
+                    self.path_food = [self.pos, self.food_location]
+                else:
+                    # TODO Fix Bug
+                    path_buffer = self.path_home[::-1]
+                    print('is none:', (path_buffer is None))
+                    print(type(path_buffer))
+                    path_buffer = path_buffer.append(self.pos)
+                    self.path_food = path_buffer.append(self.food_location)
+
+    def check_before_step(self):
+        self.check_food()
+        self.check_home()
+        if self.at_home and self.found_food:
+            self.check_home_workers()
+            self.found_food = False
+
+    def check_home_workers(self):
+        workers_at_home = []
+        for worker in self.model.worker_list:
+            if worker.at_home:
+                workers_at_home.append(worker)
+        if len(workers_at_home) > 0:
+            number_workers_sent = self.random.randint(1, len(workers_at_home))
+            print(number_workers_sent)
+            for i in range(0, number_workers_sent):
+                print(i, 'set path', self.path_food)
+                worker = self.random.choice(workers_at_home)
+                workers_at_home.remove(worker)
+                worker.set_path(self.food_location, self.path_food)
+            self.wait = False
+        else:
+            self.wait = True
+
+    def move_randomly(self) -> None:
+        neighbors = self.model.grid.get_neighborhood(self.pos, moore=False, include_center=False)
+        new_position = self.random.choice(neighbors)
+        while self.check_content(new_position, Obstacle) is not None:
+            neighbors.remove(new_position)
+            new_position = self.random.choice(neighbors)
+        self.model.grid.move_agent(self, new_position)
+
+    def move_home(self):
+        print(self.path_home)
+        index = self.path_home.index(self.pos)
+        pos_next = self.path_home[index + 1]
+        self.model.grid.move_agent(self, pos_next)
+
+    def move(self) -> None:
+        # print('found food:', self.found_food)
+        # print('at home: ', self.at_home)
+        if not self.found_food:
+            self.move_randomly()
+        elif not self.at_home and self.found_food:
+            self.move_home()
+        else:
+            print('Error')
+            print('found food', self.found_food)
+            print('at home', self.at_home)
+
+    def step(self):
+        self.check_before_step()
+        print(self.wait)
+        if not self.wait:
+            self.move()
+
+    def advance(self) -> None:
+        return
