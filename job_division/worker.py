@@ -4,6 +4,7 @@ import sys
 sys.path.insert(1, '../random_foraging')
 from obstacle import Obstacle
 from astar import Astar
+from food import Food
 
 
 class Worker(mesa.Agent):
@@ -13,6 +14,8 @@ class Worker(mesa.Agent):
         self.food_id: int = -1
         self.food_loc: tuple[int, int] = (-1, -1)
         self.path_food: list[tuple[int, int]] = []
+        self.path_home = []
+        self.cost_path = -1
         self.got_to_pos_food: bool = False
         self.a_star = Astar(self.model)
         self.wait = True
@@ -36,15 +39,36 @@ class Worker(mesa.Agent):
         else:
             self.at_home = False
 
+    def check_content(self, pos, obj_type):
+        cell_content = self.model.grid.get_cell_list_contents(pos)
+        for obj in cell_content:
+            if isinstance(obj, obj_type):
+                return obj
+        return None
+
     def check_before_step(self):
+        self.check_home()
+        if self.food_id < 0:
+            food = self.check_content(self.pos, Food)
+            if food is not None:
+                self.food_id = food.unique_id
+                self.model.grid.remove_agent(food)
+                self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
         if self.pos == self.food_loc:
+            print("got to pos")
             self.got_to_pos_food = True
-        self.chek_home()
 
     def move_towards_food(self):
-        index = self.path_food.index(self.pos)
-        next_loc = self.path_food[index + 1]
-        self.model.grid.move_agent(self, next_loc)
+        print(self.pos, self.path_food, self.got_to_pos_food)
+        if self.pos not in self.path_food:
+            self.model.grid.move_agent(self, self.path_food[0])
+        else:
+            index = self.path_food.index(self.pos)
+            if index == (len(self.path_food) - 1):
+                self.got_to_pos_food = True
+            else:
+                next_loc = self.path_food[index + 1]
+                self.model.grid.move_agent(self, next_loc)
 
     def move_randomly(self) -> None:
         neighbors = self.model.grid.get_neighborhood(self.pos, moore=False, include_center=False)
@@ -61,13 +85,19 @@ class Worker(mesa.Agent):
 
     def move(self):
         if not self.got_to_pos_food and self.food_id < 0:
+            print("move to food")
             self.move_towards_food()
         elif self.got_to_pos_food and self.food_id < 0:
+            print("move randomly")
             self.move_randomly()
-        elif self.got_to_pos_food and self.food_id > 0:
+        elif self.food_id > 0:
+            print("move home")
             self.move_home()
+        else:
+            print('error')
 
     def step(self):
+        self.check_before_step()
         print(self.wait)
         if not self.wait:
             self.move()

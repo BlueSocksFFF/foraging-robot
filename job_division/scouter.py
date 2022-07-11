@@ -49,12 +49,8 @@ class Scouter(mesa.Agent):
                 if self.path_home is None:
                     self.path_food = [self.pos, self.food_location]
                 else:
-                    # TODO Fix Bug
-                    path_buffer = self.path_home[::-1]
-                    print('is none:', (path_buffer is None))
-                    print(type(path_buffer))
-                    path_buffer = path_buffer.append(self.pos)
-                    self.path_food = path_buffer.append(self.food_location)
+                    self.path_food = self.path_home[::-1]
+                    self.path_food.append(self.food_location)
 
     def check_before_step(self):
         self.check_food()
