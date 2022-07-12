@@ -27,11 +27,12 @@ class Forager(mesa.Agent):
         return self.unique_id
 
     def move(self):
-        if self.model.number_food == 0:
+        if len(self.model.grid.food_list) == self.model.number_food:
+            self.model.found_all_food = True
             if self.at_home:
-                print("End with number of rounds: %s" % self.num_rounds)
                 return
             else:
+                self.path_home, self.cost_home = self.a_star.construct_path(self.pos, self.model.grid.home)
                 self.move_home()
         elif self.food_id is not None:
             self.move_home()
@@ -65,18 +66,19 @@ class Forager(mesa.Agent):
             if food is not None:
                 self.food_id = food.get_id()
                 self.model.grid.remove_agent(food)
-                self.model.number_food -= 1
+                self.model.grid.food_list.append(self.food_id)
                 self.path_home, self.cost_home = self.a_star.construct_path(self.pos, self.model.grid.home)
 
     def print_summary(self):
         print("Forager id: %s, number of rounds: %s" % (self.unique_id, self.num_rounds))
 
     def step(self):
+        print(self.at_home)
         self.check_before_step()
         self.move()
 
     def advance(self):
-        print(self.food_id)
+        # print(self.food_id)
         return
 
     def check_at_home(self):

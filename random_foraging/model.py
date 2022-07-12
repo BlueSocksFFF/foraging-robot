@@ -1,4 +1,5 @@
 import mesa
+import sys
 
 from mesa.time import SimultaneousActivation
 from grid import MultiGridWithHome, GridWithObstacles
@@ -15,8 +16,8 @@ class RandomForagingModel(mesa.Model):
     height_preset = 10
     width_preset = 10
 
-    number_food_preset = 40
-    number_foragers_preset = 3
+    number_food_preset = 10
+    number_foragers_preset = 4
 
     home_preset = [(0, 0), (1, 0)]
 
@@ -40,6 +41,8 @@ class RandomForagingModel(mesa.Model):
         self.home = home
         self.schedule = SimultaneousActivation(self)
         self.grid = None
+        self.forager_list = []
+        self.found_all_food = False
         self.with_obstacles = with_obstacles
         self.init_grid()
         self.place_foragers()
@@ -55,6 +58,7 @@ class RandomForagingModel(mesa.Model):
     def place_foragers(self):
         for i in range(self.number_foragers):
             forager = Forager(self.next_id(), self)
+            self.forager_list.append(forager)
             self.schedule.add(forager)
             pos = self.random.choice(self.home)
             self.grid.place_agent(forager, pos)
@@ -63,7 +67,7 @@ class RandomForagingModel(mesa.Model):
         for i in range(self.number_food):
             x = self.random.randrange(self.width)
             y = self.random.randrange(self.height)
-            while (x, y) in self.home or self.check_content((x, y), Obstacle) != None:
+            while (x, y) in self.home or self.check_content((x, y), Obstacle) is not None:
                 x = self.random.randrange(self.width)
                 y = self.random.randrange(self.height)
             food = Food(self.next_id(), self)
@@ -89,9 +93,16 @@ class RandomForagingModel(mesa.Model):
         return None
 
     def step(self):
-        if self.number_food == 0:
-            print("Found all food.")
         self.schedule.step()
+        if self.found_all_food:
+            # print("Found all food.")
+            at_home = True
+            for forager in self.forager_list:
+                if not forager.at_home:
+                    at_home = False
+                    return
+            if at_home:
+                sys.exit()
 
 
 if __name__ == "__main__":

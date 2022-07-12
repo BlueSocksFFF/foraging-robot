@@ -45,6 +45,7 @@ class JobDivisionModel(mesa.Model):
         self.home = home
         self.schedule = SimultaneousActivation(self)
         self.grid = None
+        self.found_all_food = False
         self.scouter_list = []
         self.worker_list = []
         self.with_obstacles = with_obstacles
@@ -107,4 +108,16 @@ class JobDivisionModel(mesa.Model):
 
     def step(self):
         self.schedule.step()
-
+        if len(self.grid.food_list) == self.number_food:
+            self.found_all_food = True
+            at_home = True
+            for worker in self.worker_list:
+                if not worker.at_home:
+                    at_home = False
+                    return
+            for scouter in self.scouter_list:
+                if not scouter.at_home:
+                    at_home = False
+                    return
+            if at_home:
+                sys.exit()

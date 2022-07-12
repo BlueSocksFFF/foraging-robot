@@ -25,8 +25,11 @@ class Scouter(mesa.Agent):
 
     def check_home(self) -> bool:
         if self.pos in self.model.grid.home:
-            print('at home')
+            # print('at home')
             self.at_home = True
+            if self.model.found_all_food:
+                self.wait = True
+                # print("Scouter % got home" % self.unique_id)
         else:
             self.at_home = False
 
@@ -42,7 +45,7 @@ class Scouter(mesa.Agent):
             neighbors = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=True)
             food = self.check_content(neighbors, Food)
             if food is not None:
-                print('found food')
+                # print('found food')
                 self.found_food = True
                 self.food_location = food.pos
                 self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
@@ -65,10 +68,13 @@ class Scouter(mesa.Agent):
             if worker.at_home:
                 workers_at_home.append(worker)
         if len(workers_at_home) > 0:
+            if self.model.found_all_food:
+                self.wait = True
+                return
             number_workers_sent = self.random.randint(1, len(workers_at_home))
-            print(number_workers_sent)
+            # print(number_workers_sent)
             for i in range(0, number_workers_sent):
-                print(i, 'set path', self.path_food)
+                # print(i, 'set path', self.path_food)
                 worker = self.random.choice(workers_at_home)
                 workers_at_home.remove(worker)
                 worker.set_path(self.food_location, self.path_food)
@@ -85,7 +91,7 @@ class Scouter(mesa.Agent):
         self.model.grid.move_agent(self, new_position)
 
     def move_home(self):
-        print(self.path_home)
+        # print(self.path_home)
         index = self.path_home.index(self.pos)
         pos_next = self.path_home[index + 1]
         self.model.grid.move_agent(self, pos_next)
@@ -93,7 +99,10 @@ class Scouter(mesa.Agent):
     def move(self) -> None:
         # print('found food:', self.found_food)
         # print('at home: ', self.at_home)
-        if not self.found_food:
+        if self.model.found_all_food:
+            self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+            self.move_home()
+        elif not self.found_food:
             self.move_randomly()
         elif not self.at_home and self.found_food:
             self.move_home()
@@ -104,7 +113,7 @@ class Scouter(mesa.Agent):
 
     def step(self):
         self.check_before_step()
-        print(self.wait)
+        # print(self.wait)
         if not self.wait:
             self.move()
 
