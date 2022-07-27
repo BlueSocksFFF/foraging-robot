@@ -73,7 +73,7 @@ class Forager(mesa.Agent):
         print("Forager id: %s, number of rounds: %s" % (self.unique_id, self.num_rounds))
 
     def step(self):
-        print(self.at_home)
+        # print(self.at_home)
         self.check_before_step()
         self.move()
 

@@ -27,6 +27,10 @@ def heuristic(a, b):
     """pos_b is a list"""
     x_a, y_a = a
     dist = sys.maxsize
+    if isinstance(b, tuple):
+        x_b, y_b = b
+        dist = abs(x_a - x_b) + abs(y_a - y_b)
+        return dist
     for pos in b:
         x_b, y_b = pos
         dist_new = abs(x_a - x_b) + abs(y_a - y_b)
@@ -50,11 +54,10 @@ class Astar:
 
     def get_neighbors(self, pos):
         neighbors = self.grid.get_neighborhood(pos, moore=False, include_center=False)
-        for neighbor in neighbors:
-            cell_content = self.grid.get_cell_list_contents([neighbor])
-            for obj in cell_content:
-                if isinstance(obj, Obstacle):
-                    neighbors.remove(neighbor)
+        cell_content = self.grid.get_cell_list_contents(neighbors)
+        for obj in cell_content:
+            if isinstance(obj, Obstacle):
+                neighbors.remove(obj.pos)
         return neighbors
 
     def astar_search(self, start, goals):
@@ -73,8 +76,12 @@ class Astar:
         while not frontier.empty():
             current = frontier.get()
 
-            if current in goals:
-                break
+            if isinstance(goals, tuple):
+                if current == goals:
+                    break
+            else:
+                if current in goals:
+                    break
 
             for next_grid in self.get_neighbors(current):
                 new_cost = cost_so_far[current] + 1
@@ -89,16 +96,20 @@ class Astar:
     def construct_path(self, start, goals):
         came_from, cost_so_far = self.astar_search(start, goals)
         cost = sys.maxsize
-        true_goal = goals[0]
-        if len(goals) > 1:
-            for goal in goals:
-                if goal in cost_so_far.keys():
-                    cost_new = cost_so_far[goal]
-                    if cost_new < cost:
-                        cost = cost_new
-                        true_goal = goal
-        cost = cost_so_far[true_goal]
-        current = true_goal
+        if not isinstance(goals, tuple):
+            true_goal = goals[0]
+            if len(goals) > 1:
+                for goal in goals:
+                    if goal in cost_so_far.keys():
+                        cost_new = cost_so_far[goal]
+                        if cost_new < cost:
+                            cost = cost_new
+                            true_goal = goal
+            cost = cost_so_far[true_goal]
+            current = true_goal
+        else:
+            cost = cost_so_far[goals]
+            current = goals
         path = []
         while current != start:
             path.append(current)

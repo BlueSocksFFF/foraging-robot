@@ -35,6 +35,7 @@ class Worker(mesa.Agent):
             self.at_home = True
             if self.food_id > 0:
                 self.model.grid.food_list.append(self.food_id)
+                print(self.food_id, self.model.grid.food_list)
                 self.food_id = -1
                 self.got_to_pos_food = False
                 self.wait = True
@@ -51,20 +52,28 @@ class Worker(mesa.Agent):
                 return obj
         return None
 
+    def check_found_all_food(self):
+        if self.model.found_all_food:
+            self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+
+    def check_food(self):
+        food = self.check_content([self.pos], Food)
+        if food is not None:
+            self.food_id = food.get_id()
+            self.model.grid.remove_agent(food)
+            self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+
     def check_before_step(self):
         self.check_home()
-        if len(self.model.grid.food_list) == self.model.number_food:
-            self.model.found_all_food = True
-            # print('Found all food')
-        if self.food_id < 0:
-            food = self.check_content(self.pos, Food)
-            if food is not None:
-                self.food_id = food.get_id()
-                self.model.grid.remove_agent(food)
-                self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
         if self.pos == self.food_loc:
             # print("got to pos")
             self.got_to_pos_food = True
+        if self.food_id < 0:
+            self.check_food()
+        if len(self.model.grid.food_list) >= self.model.number_food:
+            self.model.found_all_food = True
+            # print('Found all food')
+        self.check_found_all_food()
 
     def move_towards_food(self):
         # print(self.pos, self.path_food, self.got_to_pos_food)
@@ -87,13 +96,16 @@ class Worker(mesa.Agent):
         self.model.grid.move_agent(self, new_position)
 
     def move_home(self):
+        if self.pos not in self.path_home:
+            self.model.grid.move_agent(self.path_home[0])
         index = self.path_home.index(self.pos)
         pos_next = self.path_home[index + 1]
         self.model.grid.move_agent(self, pos_next)
 
     def move(self):
-        if self.model.found_all_food:
-            self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+        if self.model.found_all_food and self.at_home:
+            self.wait = True
+        elif self.model.found_all_food:
             self.move_home()
         elif not self.got_to_pos_food and self.food_id < 0:
             # print("move to food")
@@ -110,6 +122,7 @@ class Worker(mesa.Agent):
     def step(self):
         self.check_before_step()
         # print(self.wait)
+        print(self.pos)
         if not self.wait:
             self.move()
 

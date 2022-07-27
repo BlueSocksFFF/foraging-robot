@@ -17,7 +17,9 @@ __all__ = [
     "Food",
     "Obstacle",
     "grid",
-    "RandomForagingModel"
+    "RandomForagingModel",
+    "Astar",
+    "MultiGridWithHome"
 ]
 
 __title__ = "random_foraging"

@@ -3,8 +3,7 @@ import sys
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import CanvasGrid
 
-from worker import Worker
-from scouter import Scouter
+from forager import Forager
 from model import JobDivisionModel
 
 sys.path.insert(1, '../random_foraging')
@@ -14,23 +13,20 @@ from obstacle import Obstacle
 
 def agent_portrayal(agent):
     if agent is None:
+        print('Error: None agent')
         return
 
     portrayal = {}
 
-    if type(agent) is Worker:
+    if type(agent) is Forager:
         portrayal["Shape"] = "circle"
         portrayal["r"] = 0.5
-        portrayal["Color"] = "Aquamarine"
         portrayal["Filled"] = True
         portrayal["Layer"] = 2
-
-    elif type(agent) is Scouter:
-        portrayal["Shape"] = "circle"
-        portrayal["r"] = 0.5
-        portrayal["Color"] = "Orange"
-        portrayal["Filled"] = True
-        portrayal["Layer"] = 2
+        if agent.as_scouter:
+            portrayal["Color"] = "Orange"
+        else:
+            portrayal["Color"] = "Aquamarine"
 
     elif type(agent) is Food:
         portrayal["Shape"] = "rect"
@@ -51,14 +47,12 @@ def agent_portrayal(agent):
     return portrayal
 
 
-canvas_element = CanvasGrid(agent_portrayal, 10, 10, 500, 500)
-
-# TODO: add model params
+canvas_element = CanvasGrid(agent_portrayal, 10, 11, 500, 500)
 
 server = ModularServer(
     JobDivisionModel,
     [canvas_element],
     "Forager Simulation",
-    {"width": 10, "height": 10}
+    {"width": 10, "height": 11}
 )
 server.port = 8521

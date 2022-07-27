@@ -1,13 +1,11 @@
 import mesa
 import sys
+import numpy as np
 
 sys.path.insert(1, '../random_foraging')
 from astar import Astar
 from obstacle import Obstacle
 from food import Food
-
-
-# TODO Should the parent class be Forager?
 
 
 class Scouter(mesa.Agent):
@@ -27,9 +25,6 @@ class Scouter(mesa.Agent):
         if self.pos in self.model.grid.home:
             # print('at home')
             self.at_home = True
-            if self.model.found_all_food:
-                self.wait = True
-                # print("Scouter % got home" % self.unique_id)
         else:
             self.at_home = False
 
@@ -55,32 +50,32 @@ class Scouter(mesa.Agent):
                     self.path_food = self.path_home[::-1]
                     self.path_food.append(self.food_location)
 
-    def check_before_step(self):
-        self.check_food()
-        self.check_home()
-        if self.at_home and self.found_food:
-            self.check_home_workers()
-            self.found_food = False
-
     def check_home_workers(self):
         workers_at_home = []
         for worker in self.model.worker_list:
             if worker.at_home:
                 workers_at_home.append(worker)
-        if len(workers_at_home) > 0:
-            if self.model.found_all_food:
-                self.wait = True
-                return
-            number_workers_sent = self.random.randint(1, len(workers_at_home))
-            # print(number_workers_sent)
-            for i in range(0, number_workers_sent):
-                # print(i, 'set path', self.path_food)
-                worker = self.random.choice(workers_at_home)
-                workers_at_home.remove(worker)
-                worker.set_path(self.food_location, self.path_food)
-            self.wait = False
-        else:
+        if not workers_at_home or self.model.found_all_food:
             self.wait = True
+            return
+        else:
+            self.wait = False
+            number_workers_sent = np.random.randint(1, len(workers_at_home) + 1)
+            workers_sent = np.random.choice(workers_at_home, number_workers_sent, replace=False)
+            for worker in workers_sent:
+                worker.set_path(self.food_location, self.path_food)
+            self.found_food = False
+
+    def check_found_all_food(self):
+        if self.model.found_all_food:
+            self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+
+    def check_before_step(self):
+        self.check_food()
+        self.check_home()
+        self.check_found_all_food()
+        if self.at_home and self.found_food:
+            self.check_home_workers()
 
     def move_randomly(self) -> None:
         neighbors = self.model.grid.get_neighborhood(self.pos, moore=False, include_center=False)
@@ -97,10 +92,11 @@ class Scouter(mesa.Agent):
         self.model.grid.move_agent(self, pos_next)
 
     def move(self) -> None:
-        # print('found food:', self.found_food)
-        # print('at home: ', self.at_home)
-        if self.model.found_all_food:
-            self.path_home, self.cost_path = self.a_star.construct_path(self.pos, self.model.grid.home)
+        print('found food:', self.found_food)
+        print('at home: ', self.at_home)
+        if self.model.found_all_food and self.at_home:
+            self.wait = True
+        elif self.model.found_all_food:
             self.move_home()
         elif not self.found_food:
             self.move_randomly()
@@ -113,7 +109,8 @@ class Scouter(mesa.Agent):
 
     def step(self):
         self.check_before_step()
-        # print(self.wait)
+
+        print(self.wait)
         if not self.wait:
             self.move()
 

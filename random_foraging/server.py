@@ -7,6 +7,7 @@ from food import Food
 from obstacle import Obstacle
 from model import RandomForagingModel
 
+
 def agent_portrayal(agent):
     
     if agent is None:
@@ -36,18 +37,16 @@ def agent_portrayal(agent):
         portrayal["Color"] = "Olive"
         portrayal["Filled"] = True
         portrayal["Layer"] = 0
-        
-        
+
     return portrayal
 
-canvas_element = CanvasGrid(agent_portrayal, 10, 10, 500, 500)
 
-#TODO: add model params
+canvas_element = CanvasGrid(agent_portrayal, 10, 11, 500, 500)
 
 server = ModularServer(
     RandomForagingModel,
     [canvas_element],
     "Forager Simulation",
-    {"width":10, "height":10}
+    {"width": 10, "height": 11}
 )
 server.port = 8521
