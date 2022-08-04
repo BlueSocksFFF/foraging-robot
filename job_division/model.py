@@ -32,6 +32,10 @@ class JobDivisionModel(mesa.Model):
 
     environment_types = ['Random', 'Uniform', 'Gaussian', 'Vein', 'Clustered']
 
+    environment_preset = 'Gaussian'
+
+    like_cluster_preset = True
+
     def __init__(
         self,
         height=height_preset,
@@ -40,7 +44,8 @@ class JobDivisionModel(mesa.Model):
         number_foragers = number_foragers_preset,
         home=home_preset,
         set_obstacles=set_obstacles_preset,
-        environment='Gaussian'
+        like_cluster=like_cluster_preset,
+        environment=environment_preset
     ):
 
         super().__init__()
@@ -52,12 +57,13 @@ class JobDivisionModel(mesa.Model):
         self.schedule = SimultaneousActivation(self)
         self.grid = None
         self.found_all_food = False
+        self.like_cluster = like_cluster
         self.forager_list = []
         self.foragers_at_home = []
         self.set_obstacles = set_obstacles
         self.environment_type = environment
-        # self.random.seed(0)
-        # np.random.seed(0)
+        # self.random.seed(5)
+        # np.random.seed(5)
         self.init_grid()
         self.place_foragers()
         self.place_food_obstacles()
@@ -69,7 +75,7 @@ class JobDivisionModel(mesa.Model):
 
     def place_foragers(self):
         for i in range(self.number_foragers):
-            forager = Forager(self.next_id(), self, False)
+            forager = Forager(self.next_id(), self, as_scouter=False, like_cluster=self.like_cluster)
             self.forager_list.append(forager)
             self.schedule.add(forager)
             start_location = self.random.choice(self.home)
@@ -195,16 +201,24 @@ class JobDivisionModel(mesa.Model):
         return self.foragers_at_home
 
     def step(self):
+        # I feel like with the like-cluster strategy, maybe it
         self.schedule.step()
-        if len(self.grid.food_list) >= self.number_food - self.number_foragers:
-            for forager in self.forager_list:
-                forager.change_to_scouter()
-            if len(self.grid.food_list) >= self.number_food:
-                self.found_all_food = True
-                at_home = True
+        number_food_left = self.number_food - len(self.grid.food_list)
+        if not self.like_cluster:
+            if number_food_left < self.number_foragers:
                 for forager in self.forager_list:
-                    if not forager.at_home:
-                        at_home = False
-                        return
-                if at_home:
-                    sys.exit()
+                    forager.change_to_scouter()
+        else:
+            if number_food_left == 1:
+                for forager in self.forager_list:
+                    forager.change_to_scouter()
+        if len(self.grid.food_list) >= self.number_food:
+            self.found_all_food = True
+            at_home = True
+            for forager in self.forager_list:
+                if not forager.at_home:
+                    at_home = False
+                    return
+            if at_home:
+                sys.exit()
+

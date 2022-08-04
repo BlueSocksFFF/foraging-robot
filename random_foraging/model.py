@@ -17,9 +17,9 @@ class RandomForagingModel(mesa.Model):
     height_preset = 11
     width_preset = 10
 
-    number_food_preset = 10
+    number_food_preset = 20
     number_foragers_preset = 4
-    number_obstacles_preset = 5
+    number_obstacles_preset = 10
 
     # Home is now a full row
     home_preset = []
@@ -57,8 +57,8 @@ class RandomForagingModel(mesa.Model):
         self.found_all_food = False
         self.set_obstacles = set_obstacles
         self.environment_type = environment
-        # self.random.seed(0)
-        # np.random.seed(0)
+        # self.random.seed(5)
+        # np.random.seed(5)
         self.init_grid()
         self.place_foragers()
         self.place_food_obstacles()
@@ -129,7 +129,7 @@ class RandomForagingModel(mesa.Model):
 
     def place_uniform(self):
         locs = np.random.uniform(low=[0, 1], high=[self.width, self.height],
-                                 size=(self.number_food + self.number_obstacles + 5, 2)).astype(int)
+                                 size=((self.number_food + self.number_obstacles)*2, 2)).astype(int)
         # Remove duplicates
         locs_unique = np.unique(locs, axis=0)
         # Check if there are enough unique locations
@@ -153,11 +153,17 @@ class RandomForagingModel(mesa.Model):
                 self.grid.place_agent(obstacle, loc)
 
     def place_gaussian(self):
-        cov = [[2, 0], [0, 2]]
+        cov = [[5, 0], [0, 5]]
         mean = [self.width/2, self.height/2]
-        locs = np.random.multivariate_normal(mean, cov, self.number_food + self.number_obstacles + 10).astype(int)
+        locs = np.random.multivariate_normal(mean, cov, (self.number_food + self.number_obstacles)*2).astype(int)
         locs_unique = np.unique(locs, axis=0)
         locs_unique = locs_unique.tolist()
+        for loc in locs_unique:
+            x, y = loc
+            if x > self.width - 1 or x < 0:
+                locs_unique.remove(loc)
+            if y > self.height - 1 or y < 1:
+                locs_unique.remove(loc)
         if len(locs_unique) < self.number_food + self.number_obstacles:
             print('Error: Gaussian Environment: Not enough locations calculated')
             sys.exit()

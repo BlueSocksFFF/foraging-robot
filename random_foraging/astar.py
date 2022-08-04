@@ -31,11 +31,12 @@ def heuristic(a, b):
         x_b, y_b = b
         dist = abs(x_a - x_b) + abs(y_a - y_b)
         return dist
-    for pos in b:
-        x_b, y_b = pos
-        dist_new = abs(x_a - x_b) + abs(y_a - y_b)
-        if dist_new < dist:
-            dist = dist_new
+    else:
+        for pos in b:
+            x_b, y_b = pos
+            dist_new = abs(x_a - x_b) + abs(y_a - y_b)
+            if dist_new < dist:
+                dist = dist_new
     return dist
 
 
